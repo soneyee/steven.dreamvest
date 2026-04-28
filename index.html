@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,37 +12,43 @@
             body { background: white !important; }
             .report-page { box-shadow: none !important; padding: 0 !important; margin-bottom: 0 !important; page-break-after: always; }
         }
-        .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
-        .photo-container { border: 0.5px solid #eee; padding: 10px; background: #fff; }
-        .photo-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 2px; }
-        .label-input { width: 100%; margin-top: 8px; border: none; border-bottom: 1px solid #ddd; text-align: center; font-size: 13px; padding: 4px 0; }
-        @media print { .label-input { border: none !important; } .label-input::placeholder { color: transparent; } }
+        .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .photo-container { border: 1px solid #eee; padding: 8px; background: #fff; }
+        .photo-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+        .label-input { width: 100%; margin-top: 5px; border: none; border-bottom: 1px solid #ddd; text-align: center; font-size: 12px; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
-    <div class="no-print max-w-4xl mx-auto p-6 mt-6 bg-white rounded-2xl shadow-sm border border-slate-200">
-        <h1 class="text-xl font-bold mb-8">Inventory Tool <span class="text-blue-600 font-normal">v4.2</span></h1>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <input type="text" id="project" placeholder="Condo Name" class="border-b py-2 outline-none">
-            <input type="text" id="unit" placeholder="Unit No." class="border-b py-2 outline-none">
-            <input type="date" id="date" class="border-b py-2 outline-none">
+<body class="bg-gray-100">
+    <div class="no-print max-w-4xl mx-auto p-6 mt-6 bg-white rounded-xl shadow-md">
+        <h1 class="text-xl font-bold mb-6">Inventory Report Tool v4.2</h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <input type="text" id="project" placeholder="Condo Name" class="border p-2 rounded">
+            <input type="text" id="unit" placeholder="Unit No." class="border p-2 rounded">
+            <input type="date" id="date" class="border p-2 rounded">
         </div>
-        <div id="uploadZone" class="border-2 border-dashed border-slate-200 rounded-xl p-12 text-center cursor-pointer hover:bg-blue-50">
-            <p>Click to upload photos</p>
+        <div id="dropZone" class="border-2 border-dashed p-10 text-center cursor-pointer hover:bg-blue-50">
+            点击或拖入照片 (Select Multiple)
             <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
         </div>
-        <div class="flex gap-4 mt-10">
-            <button onclick="generateReport()" class="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold">Preview</button>
-            <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold">Print / PDF</button>
+        <div class="flex gap-4 mt-6">
+            <button onclick="generate()" class="flex-1 bg-black text-white py-3 rounded">预览 (Preview)</button>
+            <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-3 rounded">打印 (PDF)</button>
         </div>
     </div>
-    <div id="mainReport" class="mt-12"></div>
+    <div id="output"></div>
     <script>
         let photos = [];
         document.getElementById('date').valueAsDate = new Date();
-        document.getElementById('uploadZone').onclick = () => document.getElementById('fileInput').click();
+        document.getElementById('dropZone').onclick = () => document.getElementById('fileInput').click();
         document.getElementById('fileInput').onchange = async (e) => {
             for (let file of e.target.files) {
+                const url = await compress(file);
+                photos.push({src: url, label: ''});
+            }
+            generate();
+        };
+        function compress(file) {
+            return new Promise(res => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = (ev) => {
@@ -50,34 +56,32 @@
                     img.src = ev.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const scale = 1200 / img.width;
-                        canvas.width = 1200; canvas.height = img.height * scale;
-                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                        photos.push({ src: canvas.toDataURL('image/jpeg', 0.8), label: '' });
-                        if(photos.length === e.target.files.length) generateReport();
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 1000; canvas.height = img.height * (1000/img.width);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        res(canvas.toDataURL('image/jpeg', 0.8));
                     }
                 }
-            }
-        };
-        function generateReport() {
-            const container = document.getElementById('mainReport');
-            container.innerHTML = '';
-            const proj = document.getElementById('project').value || 'REPORT';
-            const unit = document.getElementById('unit').value || '-';
+            });
+        }
+        function generate() {
+            const out = document.getElementById('output');
+            out.innerHTML = '';
+            const pName = document.getElementById('project').value || 'REPORT';
+            const uName = document.getElementById('unit').value || '-';
             for (let i = 0; i < photos.length; i += 6) {
                 const page = document.createElement('div');
-                page.className = 'report-page bg-white max-w-[210mm] mx-auto p-[20mm] mb-10 shadow-xl';
-                let content = `<div class="flex justify-between border-b-2 border-slate-900 pb-4 mb-8">
-                    <div><h1 class="text-xl font-black">${proj}</h1><p>UNIT: ${unit}</p></div>
-                    <div class="text-right"><p>INVENTORY RECORD</p></div>
+                page.className = 'report-page bg-white max-w-[210mm] mx-auto p-10 mb-6 shadow-lg';
+                let html = `<div class="flex justify-between border-b-2 border-black pb-2 mb-6">
+                    <div><b class="text-lg">${pName}</b><br>Unit: ${uName}</div>
+                    <div class="text-right">INVENTORY RECORD</div>
                 </div><div class="photo-grid">`;
                 for (let j = i; j < i + 6 && j < photos.length; j++) {
-                    content += `<div class="photo-container"><img src="${photos[j].src}" class="photo-img">
-                    <input type="text" placeholder="Label..." class="label-input" oninput="photos[${j}].label=this.value"></div>`;
+                    html += `<div class="photo-container"><img src="${photos[j].src}" class="photo-img">
+                    <input type="text" class="label-input" placeholder="Label..." oninput="photos[${j}].label=this.value"></div>`;
                 }
-                content += `</div>`;
-                page.innerHTML = content;
-                container.appendChild(page);
+                page.innerHTML = html + `</div>`;
+                out.appendChild(page);
             }
         }
     </script>
