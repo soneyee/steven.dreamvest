@@ -3,25 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Inventory Report</title>
+    <title>Professional Inventory Report V4.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 强制 A4 打印设置 */
+        /* 核心分页修复：防止打印时页数翻倍 */
         @media print {
             @page { 
                 size: A4; 
-                margin: 15mm 15mm; 
+                margin: 0mm; /* 清除默认边距，由内部容器控制 */
+            }
+            body { 
+                background: white !important; 
+                margin: 0; 
+                padding: 0;
             }
             .no-print { display: none !important; }
-            body { background: white !important; }
             .report-page { 
                 box-shadow: none !important; 
-                padding: 0 !important; 
-                margin-bottom: 0 !important; 
-                page-break-after: always; 
+                margin: 0 !important; 
+                padding: 15mm 20mm !important; /* 打印时的实际内边距 */
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
+                height: 297mm; /* 强制固定 A4 高度 */
+                width: 210mm;
+                border: none !important;
             }
         }
         
+        /* 预览模式样式 */
+        .report-page { 
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            padding: 15mm 20mm;
+            width: 210mm;
+            min-height: 297mm;
+            transition: all 0.3s ease;
+        }
+
         .photo-grid { 
             display: grid; 
             grid-template-columns: repeat(2, 1fr); 
@@ -29,73 +48,61 @@
         }
 
         .photo-container { 
-            border: 1px solid #e5e7eb; 
-            padding: 10px; 
+            border: 1px solid #f3f4f6; 
+            padding: 8px; 
             background: #fff;
-            display: flex;
-            flex-direction: column;
         }
 
         .photo-img { 
             width: 100%; 
             aspect-ratio: 4/3; 
             object-fit: cover; 
-            border-radius: 2px;
+            background: #f9fafb;
         }
 
         .label-input { 
             width: 100%; 
             margin-top: 8px; 
             border: none; 
-            border-bottom: 1px solid #d1d5db; 
+            border-bottom: 1px solid #e5e7eb; 
             text-align: center; 
-            font-size: 13px;
+            font-size: 12px;
             padding: 4px 0;
         }
 
         @media print {
-            .label-input { border: none !important; }
+            .label-input { border: none !important; outline: none !important; }
             .label-input::placeholder { color: transparent; }
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-100 text-slate-900">
 
-    <div class="no-print max-w-4xl mx-auto p-8 mt-10 bg-white rounded-2xl shadow-xl border border-slate-200">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-black tracking-tight text-slate-800">Inventory Tool <span class="text-blue-600">v4.3</span></h1>
-            <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">READY</span>
+    <div class="no-print max-w-4xl mx-auto p-6 mt-8 bg-white rounded-2xl shadow-xl border border-slate-200">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-xl font-black text-slate-800 tracking-tighter">Inventory Tool <span class="text-blue-600">v4.4</span></h1>
+            <div id="status" class="text-xs font-mono text-slate-400 uppercase tracking-widest">System Ready</div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="flex flex-col">
-                <label class="text-[10px] font-bold uppercase text-slate-400 mb-1">Project / Condo</label>
-                <input type="text" id="project" placeholder="e.g. Semanea Hills" class="border-b-2 border-slate-200 py-2 focus:border-blue-500 outline-none transition-all">
-            </div>
-            <div class="flex flex-col">
-                <label class="text-[10px] font-bold uppercase text-slate-400 mb-1">Unit Number</label>
-                <input type="text" id="unit" placeholder="e.g. A-12-01" class="border-b-2 border-slate-200 py-2 focus:border-blue-500 outline-none transition-all">
-            </div>
-            <div class="flex flex-col">
-                <label class="text-[10px] font-bold uppercase text-slate-400 mb-1">Report Date</label>
-                <input type="date" id="date" class="border-b-2 border-slate-200 py-2 focus:border-blue-500 outline-none transition-all">
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+            <input type="text" id="project" placeholder="Project Name" class="border-b-2 py-2 outline-none focus:border-blue-500">
+            <input type="text" id="unit" placeholder="Unit Number" class="border-b-2 py-2 outline-none focus:border-blue-500">
+            <input type="date" id="date" class="border-b-2 py-2 outline-none focus:border-blue-500">
         </div>
 
-        <div id="dropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group">
-            <div class="text-slate-300 group-hover:text-blue-500 mb-3 text-4xl">+</div>
-            <p class="text-sm font-semibold text-slate-600">Click to Batch Upload Photos</p>
-            <p class="text-xs text-slate-400 mt-2">Auto-compression enabled for faster export</p>
+        <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:bg-blue-50 transition-all group">
+            <p class="text-sm font-bold text-slate-500">Select Multiple Photos</p>
+            <p class="text-[10px] text-slate-400 uppercase mt-1">Smart Auto-Compression Active</p>
             <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
         </div>
 
-        <div class="flex gap-4 mt-10">
-            <button onclick="generateReport()" class="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg">Refresh Preview</button>
-            <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg">Print / Save as PDF</button>
+        <div class="flex gap-3 mt-8">
+            <button onclick="generateReport()" class="flex-1 bg-slate-900 text-white py-3 rounded-lg font-bold text-sm">Preview Report</button>
+            <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold text-sm">Save to PDF / Print</button>
         </div>
     </div>
 
-    <div id="mainReport" class="mt-12"></div>
+    <div id="mainReport" class="flex flex-col items-center"></div>
 
     <script>
         let photos = [];
@@ -107,11 +114,13 @@
         dropZone.onclick = () => fileInput.click();
 
         fileInput.onchange = async (e) => {
+            document.getElementById('status').innerText = "Processing Photos...";
             const selectedFiles = Array.from(e.target.files);
             for (let file of selectedFiles) {
                 const dataUrl = await compressImage(file);
                 photos.push({ src: dataUrl, label: '' });
             }
+            document.getElementById('status').innerText = `Loaded: ${photos.length} Photos`;
             generateReport();
         };
 
@@ -124,13 +133,14 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1200;
+                        const MAX_WIDTH = 1200; // 宽度锁定1200px，保证清晰度且文件小
                         const scale = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scale;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                        // 0.7 质量是平衡点：30张图的报告约 5-8MB
+                        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
                     }
                 }
             });
@@ -139,25 +149,18 @@
         function generateReport() {
             const container = document.getElementById('mainReport');
             container.innerHTML = '';
-            
-            const projName = document.getElementById('project').value || 'INVENTORY REPORT';
-            const unitNo = document.getElementById('unit').value || '-';
-            const dateStr = document.getElementById('date').value;
+            const proj = document.getElementById('project').value || 'INVENTORY';
+            const unit = document.getElementById('unit').value || '-';
+            const date = document.getElementById('date').value;
 
             for (let i = 0; i < photos.length; i += 6) {
                 const page = document.createElement('div');
-                page.className = 'report-page bg-white max-w-[210mm] mx-auto p-[15mm] mb-10 shadow-2xl';
+                page.className = 'report-page';
                 
                 let html = `
-                    <div class="flex justify-between items-end border-b-2 border-slate-900 pb-4 mb-8">
-                        <div>
-                            <h1 class="text-2xl font-black uppercase text-slate-900">${projName}</h1>
-                            <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Unit: ${unitNo}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inventory Record</p>
-                            <p class="text-sm font-bold text-slate-900">${dateStr}</p>
-                        </div>
+                    <div class="flex justify-between items-end border-b-4 border-slate-900 pb-3 mb-6">
+                        <div><h1 class="text-xl font-black uppercase tracking-tight">${proj}</h1><p class="text-xs font-bold text-slate-400">UNIT: ${unit}</p></div>
+                        <div class="text-right"><p class="text-[9px] font-black text-slate-300 uppercase">Report Date</p><p class="text-xs font-bold">${date}</p></div>
                     </div>
                     <div class="photo-grid">
                 `;
@@ -166,21 +169,12 @@
                     html += `
                         <div class="photo-container">
                             <img src="${photos[j].src}" class="photo-img">
-                            <input type="text" placeholder="Add Remark..." 
-                                   value="${photos[j].label}" 
-                                   class="label-input" 
-                                   oninput="photos[${j}].label = this.value">
+                            <input type="text" placeholder="Remark..." value="${photos[j].label}" class="label-input" oninput="photos[${j}].label=this.value">
                         </div>
                     `;
                 }
 
-                html += `</div>
-                    <div class="mt-10 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest border-t border-slate-100 pt-4">
-                        <span>Dreamvest Realty</span>
-                        <span>Page ${Math.floor(i/6) + 1} of ${Math.ceil(photos.length/6)}</span>
-                    </div>
-                `;
-                
+                html += `</div><div class="mt-8 text-[9px] text-slate-300 flex justify-between uppercase font-bold"><span>Dreamvest Realty</span><span>Page ${Math.floor(i/6)+1}</span></div>`;
                 page.innerHTML = html;
                 container.appendChild(page);
             }
