@@ -3,102 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Inventory Report V4.4</title>
+    <title>Dreamvest Inventory Tool V4.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 核心分页修复：防止打印时页数翻倍 */
         @media print {
-            @page { 
-                size: A4; 
-                margin: 0mm; /* 清除默认边距，由内部容器控制 */
-            }
-            body { 
-                background: white !important; 
-                margin: 0; 
-                padding: 0;
-            }
+            @page { size: A4; margin: 0; }
+            body { background: white !important; margin: 0; padding: 0; }
             .no-print { display: none !important; }
             .report-page { 
-                box-shadow: none !important; 
-                margin: 0 !important; 
-                padding: 15mm 20mm !important; /* 打印时的实际内边距 */
+                box-shadow: none !important; margin: 0 !important; 
+                padding: 15mm 15mm !important; 
                 page-break-after: always !important;
                 page-break-inside: avoid !important;
-                height: 297mm; /* 强制固定 A4 高度 */
-                width: 210mm;
-                border: none !important;
+                height: 297mm; width: 210mm; border: none !important;
             }
         }
-        
-        /* 预览模式样式 */
-        .report-page { 
-            background: white;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
-            padding: 15mm 20mm;
-            width: 210mm;
-            min-height: 297mm;
-            transition: all 0.3s ease;
-        }
-
-        .photo-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 20px; 
-        }
-
-        .photo-container { 
-            border: 1px solid #f3f4f6; 
-            padding: 8px; 
-            background: #fff;
-        }
-
-        .photo-img { 
-            width: 100%; 
-            aspect-ratio: 4/3; 
-            object-fit: cover; 
-            background: #f9fafb;
-        }
-
-        .label-input { 
-            width: 100%; 
-            margin-top: 8px; 
-            border: none; 
-            border-bottom: 1px solid #e5e7eb; 
-            text-align: center; 
-            font-size: 12px;
-            padding: 4px 0;
-        }
-
-        @media print {
-            .label-input { border: none !important; outline: none !important; }
-            .label-input::placeholder { color: transparent; }
-        }
+        .report-page { background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin: 30px auto; padding: 15mm 15mm; width: 210mm; min-height: 297mm; }
+        .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .photo-container { border: 1px solid #f1f5f9; padding: 6px; background: #fff; }
+        .photo-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #f8fafc; }
+        .label-input { width: 100%; margin-top: 6px; border: none; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px; padding: 2px 0; }
+        @media print { .label-input { border: none !important; outline: none !important; } .label-input::placeholder { color: transparent; } }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900">
+<body class="bg-slate-50 text-slate-900 font-sans">
 
-    <div class="no-print max-w-4xl mx-auto p-6 mt-8 bg-white rounded-2xl shadow-xl border border-slate-200">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-xl font-black text-slate-800 tracking-tighter">Inventory Tool <span class="text-blue-600">v4.4</span></h1>
-            <div id="status" class="text-xs font-mono text-slate-400 uppercase tracking-widest">System Ready</div>
+    <div class="no-print max-w-2xl mx-auto p-8 mt-10 bg-white rounded-3xl shadow-xl border border-slate-100">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-xl font-black text-slate-800 tracking-tighter uppercase">Inventory Pro <span class="text-blue-600">v4.6</span></h1>
+            <div id="status" class="text-[10px] font-bold text-blue-500 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">Turbo Compression Active</div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-            <input type="text" id="project" placeholder="Project Name" class="border-b-2 py-2 outline-none focus:border-blue-500">
-            <input type="text" id="unit" placeholder="Unit Number" class="border-b-2 py-2 outline-none focus:border-blue-500">
-            <input type="date" id="date" class="border-b-2 py-2 outline-none focus:border-blue-500">
+        <div class="space-y-5 mb-8">
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" id="project" placeholder="Project / Condo" class="bg-slate-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+                <input type="text" id="unit" placeholder="Unit No." class="bg-slate-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+            </div>
+            <input type="date" id="date" class="w-full bg-slate-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
         </div>
 
-        <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:bg-blue-50 transition-all group">
-            <p class="text-sm font-bold text-slate-500">Select Multiple Photos</p>
-            <p class="text-[10px] text-slate-400 uppercase mt-1">Smart Auto-Compression Active</p>
+        <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
+            <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">📸</div>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Select Multiple Photos</p>
+            <p id="counter" class="text-[10px] text-slate-400 mt-2 font-mono">0 Photos Loaded</p>
             <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
         </div>
 
-        <div class="flex gap-3 mt-8">
-            <button onclick="generateReport()" class="flex-1 bg-slate-900 text-white py-3 rounded-lg font-bold text-sm">Preview Report</button>
-            <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold text-sm">Save to PDF / Print</button>
+        <div class="grid grid-cols-2 gap-4 mt-8">
+            <button onclick="generateReport()" class="bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-800 shadow-lg transition-all">Preview</button>
+            <button onclick="window.print()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">Save PDF</button>
         </div>
     </div>
 
@@ -107,24 +60,24 @@
     <script>
         let photos = [];
         document.getElementById('date').valueAsDate = new Date();
-
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
 
         dropZone.onclick = () => fileInput.click();
 
         fileInput.onchange = async (e) => {
-            document.getElementById('status').innerText = "Processing Photos...";
+            document.getElementById('status').innerText = "Compressing Data...";
             const selectedFiles = Array.from(e.target.files);
             for (let file of selectedFiles) {
-                const dataUrl = await compressImage(file);
+                const dataUrl = await turboCompress(file);
                 photos.push({ src: dataUrl, label: '' });
             }
-            document.getElementById('status').innerText = `Loaded: ${photos.length} Photos`;
+            document.getElementById('status').innerText = "Turbo Compression Active";
+            document.getElementById('counter').innerText = `${photos.length} Photos Optimized`;
             generateReport();
         };
 
-        function compressImage(file) {
+        function turboCompress(file) {
             return new Promise(resolve => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -133,14 +86,19 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1200; // 宽度锁定1200px，保证清晰度且文件小
-                        const scale = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
+                        const TARGET_WIDTH = 800; // 核心：锁定 800px 宽度
+                        const scale = TARGET_WIDTH / img.width;
+                        canvas.width = TARGET_WIDTH;
                         canvas.height = img.height * scale;
+                        
                         const ctx = canvas.getContext('2d');
+                        // 使用平滑插值算法
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'medium';
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        // 0.7 质量是平衡点：30张图的报告约 5-8MB
-                        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                        
+                        // 极致压缩比 0.35：单张图大小约 80kb-120kb
+                        resolve(canvas.toDataURL('image/jpeg', 0.35)); 
                     }
                 }
             });
@@ -151,16 +109,21 @@
             container.innerHTML = '';
             const proj = document.getElementById('project').value || 'INVENTORY';
             const unit = document.getElementById('unit').value || '-';
-            const date = document.getElementById('date').value;
+            const dateStr = document.getElementById('date').value;
 
             for (let i = 0; i < photos.length; i += 6) {
                 const page = document.createElement('div');
                 page.className = 'report-page';
-                
                 let html = `
-                    <div class="flex justify-between items-end border-b-4 border-slate-900 pb-3 mb-6">
-                        <div><h1 class="text-xl font-black uppercase tracking-tight">${proj}</h1><p class="text-xs font-bold text-slate-400">UNIT: ${unit}</p></div>
-                        <div class="text-right"><p class="text-[9px] font-black text-slate-300 uppercase">Report Date</p><p class="text-xs font-bold">${date}</p></div>
+                    <div class="flex justify-between items-end border-b-4 border-slate-900 pb-4 mb-8">
+                        <div>
+                            <h1 class="text-2xl font-black uppercase leading-none mb-1">${proj}</h1>
+                            <p class="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Unit: ${unit}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] font-black text-blue-600 uppercase mb-1 tracking-widest">Inventory Record</p>
+                            <p class="text-xs font-bold text-slate-900">${dateStr}</p>
+                        </div>
                     </div>
                     <div class="photo-grid">
                 `;
@@ -169,12 +132,17 @@
                     html += `
                         <div class="photo-container">
                             <img src="${photos[j].src}" class="photo-img">
-                            <input type="text" placeholder="Remark..." value="${photos[j].label}" class="label-input" oninput="photos[${j}].label=this.value">
+                            <input type="text" placeholder="Add Note..." value="${photos[j].label}" class="label-input" oninput="photos[${j}].label=this.value">
                         </div>
                     `;
                 }
 
-                html += `</div><div class="mt-8 text-[9px] text-slate-300 flex justify-between uppercase font-bold"><span>Dreamvest Realty</span><span>Page ${Math.floor(i/6)+1}</span></div>`;
+                html += `</div>
+                    <div class="mt-12 flex justify-between items-center text-[9px] text-slate-300 font-bold uppercase tracking-widest border-t border-slate-100 pt-4">
+                        <span>Dreamvest Realty</span>
+                        <span>Page ${Math.floor(i/6) + 1} of ${Math.ceil(photos.length/6)}</span>
+                    </div>
+                `;
                 page.innerHTML = html;
                 container.appendChild(page);
             }
