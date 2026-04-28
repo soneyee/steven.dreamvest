@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory V5.1 - Final Fit</title>
+    <title>Inventory V5.2 - iOS Final Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* 针对 iOS Safari 打印引擎的底层重构 */
         @media print {
             @page { size: A4; margin: 0; }
-            html, body { margin: 0; padding: 0; background: #fff; }
+            html, body { margin: 0; padding: 0; background: #fff; width: 210mm; }
             .no-print { display: none !important; }
             
             .report-page { 
-                /* 关键修复：高度缩减到 265mm，留出巨大空隙给系统水印 */
-                height: 265mm !important; 
+                /* 不再强锁总高度，改为强制分页标记 */
+                page-break-before: always !important;
+                break-before: page !important;
+                display: block !important;
                 width: 210mm !important;
-                padding: 10mm 15mm 25mm 15mm !important; /* 底部预留 25mm 缓冲区 */
-                margin: 0 !important;
-                page-break-after: always !important;
-                page-break-inside: avoid !important;
-                display: flex !important;
-                flex-direction: column !important;
+                padding: 10mm 15mm 40mm 15mm !important; /* 底部 4cm 绝对真空区 */
                 box-sizing: border-box !important;
-                overflow: hidden !important; 
+                position: relative !important;
             }
+            /* 第一页不需要前置分页 */
+            .report-page:first-child { page-break-before: avoid !important; break-before: avoid !important; }
         }
         
-        .report-page { background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin: 20px auto; padding: 15mm 15mm; width: 210mm; min-height: 297mm; display: flex; flex-direction: column; }
-        .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-grow: 1; align-content: start; }
+        .report-page { background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin: 20px auto; padding: 15mm 15mm; width: 210mm; min-height: 280mm; display: flex; flex-direction: column; }
+        .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
         .photo-container { border: 1px solid #f1f5f9; padding: 5px; background: #fff; }
         .photo-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #f8fafc; }
         .label-input { width: 100%; margin-top: 5px; border: none; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px; padding: 2px 0; outline: none; }
@@ -36,17 +36,17 @@
 <body class="bg-slate-50 text-slate-900 font-sans">
 
     <div class="no-print max-w-xl mx-auto p-6 mt-10 bg-white rounded-3xl shadow-2xl border border-slate-100 text-center">
-        <h1 class="text-xl font-black text-slate-800 tracking-tighter uppercase mb-6">Inventory <span class="text-blue-600">v5.1</span></h1>
+        <h1 class="text-xl font-black text-slate-800 uppercase mb-6 tracking-tighter">Inventory <span class="text-blue-600">v5.2</span></h1>
         
         <div class="grid grid-cols-2 gap-3 mb-4">
-            <input type="text" id="project" placeholder="Project Name" class="bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm w-full">
-            <input type="text" id="unit" placeholder="Unit No." class="bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm w-full">
+            <input type="text" id="project" placeholder="Project Name" class="bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm w-full border-0">
+            <input type="text" id="unit" placeholder="Unit No." class="bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm w-full border-0">
         </div>
         <input type="date" id="date" class="w-full bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm mb-6">
 
         <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center cursor-pointer hover:bg-blue-50 transition-all mb-8">
-            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Select Photos</p>
-            <p id="counter" class="text-[10px] text-blue-500 font-bold mt-2 uppercase">Alignment Locked</p>
+            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Tap to Upload</p>
+            <p id="counter" class="text-[10px] text-blue-500 font-bold mt-2 uppercase">iOS Print Logic Updated</p>
             <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
         </div>
 
@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <div id="mainReport" class="flex flex-col items-center"></div>
+    <div id="mainReport"></div>
 
     <script>
         let photos = [];
@@ -108,11 +108,11 @@
                 let html = `
                     <div class="flex justify-between items-end border-b-2 border-slate-900 pb-2 mb-4">
                         <div>
-                            <h1 class="text-lg font-black uppercase leading-none mb-1">${proj}</h1>
+                            <h1 class="text-lg font-black uppercase mb-0.5">${proj}</h1>
                             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Unit: ${unit}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[8px] font-black text-blue-600 uppercase mb-0.5 tracking-tighter">Inventory Record</p>
+                            <p class="text-[8px] font-black text-blue-600 uppercase mb-0.5 tracking-tighter italic">Official Record</p>
                             <p class="text-[10px] font-bold text-slate-900">${dateStr}</p>
                         </div>
                     </div>
@@ -127,7 +127,7 @@
                     `;
                 }
                 html += `</div>
-                    <div class="mt-auto flex justify-between items-center text-[8px] text-slate-300 font-bold uppercase tracking-widest border-t border-slate-100 pt-2">
+                    <div class="flex justify-between items-center text-[8px] text-slate-300 font-bold uppercase tracking-widest border-t border-slate-100 pt-2">
                         <span>Dreamvest Realty</span>
                         <span>Page ${Math.floor(i/6) + 1} of ${Math.ceil(photos.length/6)}</span>
                     </div>
