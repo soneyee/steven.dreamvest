@@ -3,55 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dreamvest Inventory Tool V4.6</title>
+    <title>Inventory Tool V4.9 - iOS Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* 针对 iOS 的终极打印修复 */
         @media print {
-            @page { size: A4; margin: 0; }
-            body { background: white !important; margin: 0; padding: 0; }
+            @page { 
+                size: A4; 
+                margin: 0mm !important; 
+            }
+            html, body { 
+                margin: 0 !important; 
+                padding: 0 !important;
+                background: #fff !important;
+            }
+            /* 尝试强制隐藏浏览器水印文字 */
+            #mainReport { color-adjust: exact; -webkit-print-color-adjust: exact; }
+            
             .no-print { display: none !important; }
+            
             .report-page { 
-                box-shadow: none !important; margin: 0 !important; 
-                padding: 15mm 15mm !important; 
+                /* 关键修复：高度设为 287mm 而非 297mm，留出 10mm 空间给系统 URL 水印，防止挤压内容 */
+                height: 287mm !important; 
+                width: 210mm !important;
+                padding: 10mm 15mm !important; 
+                margin: 0 !important;
                 page-break-after: always !important;
                 page-break-inside: avoid !important;
-                height: 297mm; width: 210mm; border: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                box-sizing: border-box !important;
+                position: relative !important;
+                overflow: hidden !important;
             }
         }
-        .report-page { background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin: 30px auto; padding: 15mm 15mm; width: 210mm; min-height: 297mm; }
-        .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .photo-container { border: 1px solid #f1f5f9; padding: 6px; background: #fff; }
+        
+        .report-page { background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin: 20px auto; padding: 15mm 15mm; width: 210mm; min-height: 297mm; display: flex; flex-direction: column; }
+        .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; flex-grow: 1; align-content: start; }
+        .photo-container { border: 1px solid #f1f5f9; padding: 6px; background: #fff; break-inside: avoid; }
         .photo-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #f8fafc; }
         .label-input { width: 100%; margin-top: 6px; border: none; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 11px; padding: 2px 0; }
         @media print { .label-input { border: none !important; outline: none !important; } .label-input::placeholder { color: transparent; } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans">
+<body class="bg-slate-50 text-slate-900">
 
-    <div class="no-print max-w-2xl mx-auto p-8 mt-10 bg-white rounded-3xl shadow-xl border border-slate-100">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-xl font-black text-slate-800 tracking-tighter uppercase">Inventory Pro <span class="text-blue-600">v4.6</span></h1>
-            <div id="status" class="text-[10px] font-bold text-blue-500 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">Turbo Compression Active</div>
+    <div class="no-print max-w-xl mx-auto p-8 mt-10 bg-white rounded-3xl shadow-xl border border-slate-100 text-center">
+        <h1 class="text-xl font-black text-slate-800 uppercase mb-6 tracking-tighter">Inventory Pro <span class="text-blue-600">v4.9</span></h1>
+        
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <input type="text" id="project" placeholder="Project" class="bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm w-full">
+            <input type="text" id="unit" placeholder="Unit" class="bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm w-full">
         </div>
+        <input type="date" id="date" class="w-full bg-slate-50 rounded-xl px-4 py-3 outline-none text-sm mb-6">
 
-        <div class="space-y-5 mb-8">
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="project" placeholder="Project / Condo" class="bg-slate-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
-                <input type="text" id="unit" placeholder="Unit No." class="bg-slate-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
-            </div>
-            <input type="date" id="date" class="w-full bg-slate-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
-        </div>
-
-        <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
-            <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">📸</div>
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Select Multiple Photos</p>
-            <p id="counter" class="text-[10px] text-slate-400 mt-2 font-mono">0 Photos Loaded</p>
+        <div id="dropZone" class="border-2 border-dashed border-slate-200 rounded-2xl p-8 mb-8 cursor-pointer hover:bg-blue-50 transition-all">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Select Photos</p>
+            <p id="counter" class="text-[10px] text-blue-500 font-mono mt-1">Ready</p>
             <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mt-8">
-            <button onclick="generateReport()" class="bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-800 shadow-lg transition-all">Preview</button>
-            <button onclick="window.print()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">Save PDF</button>
+        <div class="flex gap-3">
+            <button onclick="generateReport()" class="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase shadow-lg">Preview</button>
+            <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold text-xs uppercase shadow-lg shadow-blue-100">Save PDF</button>
         </div>
     </div>
 
@@ -66,13 +80,11 @@
         dropZone.onclick = () => fileInput.click();
 
         fileInput.onchange = async (e) => {
-            document.getElementById('status').innerText = "Compressing Data...";
             const selectedFiles = Array.from(e.target.files);
             for (let file of selectedFiles) {
                 const dataUrl = await turboCompress(file);
                 photos.push({ src: dataUrl, label: '' });
             }
-            document.getElementById('status').innerText = "Turbo Compression Active";
             document.getElementById('counter').innerText = `${photos.length} Photos Optimized`;
             generateReport();
         };
@@ -86,18 +98,12 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const TARGET_WIDTH = 800; // 核心：锁定 800px 宽度
+                        const TARGET_WIDTH = 800; 
                         const scale = TARGET_WIDTH / img.width;
                         canvas.width = TARGET_WIDTH;
                         canvas.height = img.height * scale;
-                        
                         const ctx = canvas.getContext('2d');
-                        // 使用平滑插值算法
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'medium';
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        // 极致压缩比 0.35：单张图大小约 80kb-120kb
                         resolve(canvas.toDataURL('image/jpeg', 0.35)); 
                     }
                 }
@@ -115,30 +121,28 @@
                 const page = document.createElement('div');
                 page.className = 'report-page';
                 let html = `
-                    <div class="flex justify-between items-end border-b-4 border-slate-900 pb-4 mb-8">
+                    <div class="flex justify-between items-end border-b-2 border-slate-900 pb-2 mb-4">
                         <div>
-                            <h1 class="text-2xl font-black uppercase leading-none mb-1">${proj}</h1>
-                            <p class="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Unit: ${unit}</p>
+                            <h1 class="text-lg font-black uppercase mb-0.5">${proj}</h1>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Unit: ${unit}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[9px] font-black text-blue-600 uppercase mb-1 tracking-widest">Inventory Record</p>
-                            <p class="text-xs font-bold text-slate-900">${dateStr}</p>
+                            <p class="text-[8px] font-black text-blue-600 uppercase mb-0.5 tracking-tighter">Inventory Record</p>
+                            <p class="text-[10px] font-bold text-slate-900">${dateStr}</p>
                         </div>
                     </div>
                     <div class="photo-grid">
                 `;
-
                 for (let j = i; j < i + 6 && j < photos.length; j++) {
                     html += `
                         <div class="photo-container">
                             <img src="${photos[j].src}" class="photo-img">
-                            <input type="text" placeholder="Add Note..." value="${photos[j].label}" class="label-input" oninput="photos[${j}].label=this.value">
+                            <input type="text" placeholder="Remark..." value="${photos[j].label}" class="label-input" oninput="photos[${j}].label=this.value">
                         </div>
                     `;
                 }
-
                 html += `</div>
-                    <div class="mt-12 flex justify-between items-center text-[9px] text-slate-300 font-bold uppercase tracking-widest border-t border-slate-100 pt-4">
+                    <div class="mt-auto flex justify-between items-center text-[8px] text-slate-300 font-bold uppercase tracking-widest border-t border-slate-100 pt-2">
                         <span>Dreamvest Realty</span>
                         <span>Page ${Math.floor(i/6) + 1} of ${Math.ceil(photos.length/6)}</span>
                     </div>
